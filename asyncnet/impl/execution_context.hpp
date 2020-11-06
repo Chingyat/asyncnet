@@ -11,14 +11,14 @@
 #include <algorithm>
 
 namespace asyncnet {
-    template <typename Service, typename ...Args>
-    Service& make_service(execution_context& context, Args &&...args) {
+    template<typename Service, typename ...Args>
+    Service &make_service(execution_context &context, Args &&...args) {
         std::unique_lock<std::recursive_mutex> lock(context._mutex);
 
         auto const iter = std::find_if(context._services.cbegin(), context._services.cend(),
-                     [](const std::pair<std::unique_ptr<execution_context::service>, execution_context::service_index_type> &pair) {
-            return pair.second == detail::key_index<typename Service::key>();
-        });
+                                       [](const std::pair<std::unique_ptr<execution_context::service>, execution_context::service_index_type> &pair) {
+                                           return pair.second == detail::key_index<typename Service::key>();
+                                       });
 
         if (iter != context._services.cend())
             throw service_already_exist();
@@ -30,7 +30,7 @@ namespace asyncnet {
         return ret;
     }
 
-    template <typename Service>
+    template<typename Service>
     bool has_service(const execution_context &context) {
         std::lock_guard<std::recursive_mutex> lock(context._mutex);
 

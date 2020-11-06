@@ -22,9 +22,9 @@ namespace asyncnet {
             std::lock_guard<std::recursive_mutex> lock(_mutex);
             std::transform(_services.crbegin(), _services.crend(),
                            std::back_inserter(services),
-                           [] (const std::pair<std::unique_ptr<service>, service_index_type > &svc) {
-                return svc.first.get();
-            });
+                           [](const std::pair<std::unique_ptr<service>, service_index_type> &svc) {
+                               return svc.first.get();
+                           });
         }
 
         std::for_each(services.cbegin(), services.cend(), [](service *svc) {

@@ -51,65 +51,58 @@ namespace asyncnet {
                 h(static_cast<Params>(args)...);
             }
 
-        private:
             template<typename U>
-            explicit handler_impl(U &&u)
+            explicit handler_impl(int, U &&u)
                     : t(std::forward<U>(u)) {}
 
         };
 
         template<typename Signature>
         struct wrapped_handler {
-            handler_base<Signature>* _owned_handler;
+            handler_base<Signature> *_owned_handler;
 
             template<typename U, typename ProtoAllocator>
-            explicit wrapped_handler(U &&u, const ProtoAllocator &alloc)
-            {
+            explicit wrapped_handler(U &&u, const ProtoAllocator &alloc) {
                 using impl_type = handler_impl<Signature, std::decay_t<U>, ProtoAllocator>;
                 using traits_type = typename std::allocator_traits<ProtoAllocator>::
-                        template rebind_traits<impl_type>;
+                template rebind_traits<impl_type>;
+                typename traits_type::allocator_type a(alloc);
 
-                auto pointer = traits_type ::allocate(alloc, 1);
+                auto pointer = traits_type::allocate(a, 1);
                 try {
                     auto address = std::addressof(*pointer);
-                    traits_type::construct(alloc, address, std::forward<U>(u));
+                    traits_type::construct(a, address, int(), std::forward<U>(u));
                     _owned_handler = address;
                 } catch (...) {
-                    traits_type ::deallocate(alloc, pointer, 1);
+                    traits_type::deallocate(a, pointer, 1);
                     throw;
                 }
             }
 
             wrapped_handler(wrapped_handler &&other) noexcept
-                : _owned_handler(std::exchange(other._owned_handler, nullptr))
-            {}
+                    : _owned_handler(std::exchange(other._owned_handler, nullptr)) {}
 
-            wrapped_handler &operator=(wrapped_handler &&other) noexcept
-            {
+            wrapped_handler &operator=(wrapped_handler &&other) noexcept {
                 using std::swap;
                 swap(_owned_handler, other._owned_handler);
                 return *this;
             }
 
-            ~wrapped_handler() noexcept
-            {
-                if (_owned_handler)
-                {
+            ~wrapped_handler() noexcept {
+                if (_owned_handler) {
                     _owned_handler->release();
                 }
             }
 
-            template <typename ...Args>
-            void invoke(Args &&...args)
-            {
+            template<typename ...Args>
+            void invoke(Args &&...args) {
                 assert(_owned_handler);
 
                 _owned_handler->invoke(std::forward<Args>(args)...);
                 _owned_handler = nullptr;
             }
 
-            bool has_value() const
-            {
+            bool has_value() const {
                 return _owned_handler != nullptr;
             }
         };

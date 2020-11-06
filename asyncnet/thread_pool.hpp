@@ -8,6 +8,8 @@
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/async_result.hpp>
 
+#include <atomic>
+
 namespace asyncnet {
 
     class thread_pool {
@@ -15,18 +17,24 @@ namespace asyncnet {
         class executor_type;
 
         thread_pool();
-        explicit thread_pool(int nthreads);
-        thread_pool(const thread_pool&) = delete;
-        thread_pool &operator=(const thread_pool&) = delete;
+
+        explicit thread_pool(std::size_t nthreads);
+
+        thread_pool(const thread_pool &) = delete;
+
+        thread_pool &operator=(const thread_pool &) = delete;
+
         ~thread_pool() noexcept;
 
         executor_type get_executor();
 
-        template <typename CompletionToken, typename ProtoAllocator>
-        typename async_result<CompletionToken, void()>::result_type
-        post(CompletionToken &&token, const ProtoAllocator& a);
+        void stop();
+
+        void join();
 
 
+    private:
+        std::atomic_bool _stop_called;
     };
 
 }

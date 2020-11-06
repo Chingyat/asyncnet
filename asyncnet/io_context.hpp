@@ -13,6 +13,8 @@
 #include <condition_variable>
 #include <list>
 #include <atomic>
+#include <thread>
+#include <vector>
 
 namespace asyncnet {
 
@@ -24,7 +26,9 @@ namespace asyncnet {
         using count_type = unsigned int;
 
         io_context();
+
         explicit io_context(int concurrency_hint);
+
         ~io_context() noexcept;
 
         executor_type get_executor();
@@ -54,35 +58,49 @@ namespace asyncnet {
         bool stopped() const { return _stopped; }
 
     private:
-        std::mutex _mutex;
+        mutable std::mutex _mutex;
         std::condition_variable _cond;
         std::list<detail::wrapped_handler<void()>> _compq;
 
         std::atomic_bool _stopped{false};
 
         std::atomic<count_type> _work_count{0};
+
+        static std::vector<executor_type> &_thread_run_stack();
+
+        struct run_stack_guard;
     };
 
     class io_context::executor_type {
-        friend class io_context;
+        friend io_context;
 
     public:
         executor_type(const executor_type &) = default;
-        executor_type& operator=(const executor_type &) = default;
 
-        io_context& context() const { return *_context; }
+        executor_type &operator=(const executor_type &) = default;
+
+        io_context &context() const { assert(_context); return *_context; }
 
         bool running_in_this_thread() const;
 
-        template <typename CompletionToken, typename ProtoAllocator>
-        typename async_result<std::decay_t<CompletionToken>, void()>::result_type
-        post(CompletionToken&& token, const ProtoAllocator &a) const;
+        template<typename Function, typename ProtoAllocator>
+        void post(Function &&f, const ProtoAllocator &a) const;
 
-        void on_work_finished() const;
-        void on_work_started() const;
+        template<typename Function, typename ProtoAllocator>
+        void dispatch(Function &&f, const ProtoAllocator &a) const;
 
-        friend bool operator==(const executor_type &x, const executor_type &y);
-        friend bool operator!=(const executor_type &x, const executor_type &y);
+
+        void on_work_finished() const noexcept;
+
+        void on_work_started() const noexcept;
+
+        friend bool operator==(const executor_type &x, const executor_type &y) noexcept {
+            return std::addressof(x.context()) == std::addressof(y.context());
+        }
+
+        friend bool operator!=(const executor_type &x, const executor_type &y) noexcept {
+            return !(x == y);
+        }
 
     private:
         explicit executor_type(io_context &context) noexcept;
@@ -92,5 +110,7 @@ namespace asyncnet {
 
 
 }
+
+#include <asyncnet/impl/io_context.hpp>
 
 #endif //ASYNCNET_IO_CONTEXT_HPP

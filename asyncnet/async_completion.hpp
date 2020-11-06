@@ -14,11 +14,10 @@ namespace asyncnet {
     struct async_completion {
         using completion_handler_type = typename async_result<std::decay_t<CompletionToken>, Signature>::completion_handler_type;
 
-        completion_handler_type completion_handler;
+        mutable completion_handler_type completion_handler;
         async_result<std::decay_t<CompletionToken>, Signature> result;
 
-        template<typename U>
-        explicit async_completion(U &&u)
+        explicit async_completion(CompletionToken &u)
             : completion_handler(std::forward<CompletionToken>(u))
             , result(completion_handler)
         {}

@@ -10,14 +10,16 @@
 namespace asyncnet {
 
     class execution_context::service {
-        friend class execution_context;
+        friend execution_context;
+
     public:
-        explicit service(execution_context &context);
+        explicit service(execution_context &context) {}
 
         virtual ~service() = default;
 
     private:
         virtual void shutdown() noexcept = 0;
+
         virtual void notify_fork() {}
     };
 
