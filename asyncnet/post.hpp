@@ -11,17 +11,18 @@
 
 namespace asyncnet {
 
-    template<typename CompletionToken>
-    typename async_result<CompletionToken, void()>::result_type
-    post(CompletionToken &&token);
+template <typename CompletionToken>
+typename async_result<CompletionToken, void()>::result_type
+post(CompletionToken &&token);
 
-    template<typename Executor, typename CompletionToken, std::enable_if_t<is_executor<Executor>::value, int> = 0>
-    typename async_result<CompletionToken, void()>::result_type
-    post(const Executor &ex, CompletionToken &&token);
+template <typename Executor, typename CompletionToken, std::enable_if_t<is_executor<Executor>::value, int> = 0>
+typename async_result<CompletionToken, void()>::result_type
+post(const Executor &ex, CompletionToken &&token);
 
-    template<typename ExecutionContext, typename CompletionToken, std::enable_if_t<std::is_base_of<execution_context, ExecutionContext>::value, int> = 0>
-    typename async_result<CompletionToken, void()>::result_type
-    post(ExecutionContext &context, CompletionToken &&token);
+template <typename ExecutionContext, typename CompletionToken, std::enable_if_t<std::is_base_of<execution_context, ExecutionContext>::value, int> = 0>
+typename async_result<CompletionToken, void()>::result_type
+post(ExecutionContext &context, CompletionToken &&token);
+
 }
 
 #include <asyncnet/impl/post.hpp>

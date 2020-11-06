@@ -14,35 +14,50 @@
 #include <vector>
 
 namespace asyncnet {
-    class system_executor;
 
-    class system_context : public execution_context {
-        friend system_executor;
-    public:
-        using executor_type = system_executor;
+class system_executor;
 
-        executor_type get_executor();
+class system_context : public execution_context
+{
+  friend system_executor;
 
-        void join();
+public:
+  using executor_type = system_executor;
 
-        void stop();
+  /// Returns an system_executor.
+  executor_type get_executor();
 
-        bool stopped() const;
+  /// Waits for all threads in the system thread pool to join.
+  void join();
 
-        ~system_context() noexcept;
+  /// Stops the system thread pool.
+  void stop();
 
-    private:
-        system_context();
+  /// Indicates whether stop() has been called.
+  bool stopped() const;
 
-        static system_context &get_system_context();
+  /// Destructor.
+  ~system_context() noexcept;
 
-        static const std::size_t num_threads = 4;
+private:
+  /// Constructor.
+  system_context();
 
-        io_context _work_io_context;
-        std::vector<std::thread> _threads;
+  /// Returns the system_context singleton.
+  static system_context &get_system_context();
 
-        executor_work_guard<io_context::executor_type> _work;
-    };
+  /// Number of threads in the system thread pool.
+  static const std::size_t num_threads = 4;
+
+  /// io_context used for dispatching works.
+  io_context work_io_context_;
+
+  /// Threads.
+  std::vector<std::thread> threads_;
+
+  /// Prevents work_io_context_ from exiting.
+  executor_work_guard<io_context::executor_type> work_;
+};
 
 }
 

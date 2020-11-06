@@ -10,18 +10,22 @@
 
 namespace asyncnet {
 
-    template <typename CompletionToken, typename Signature>
-    struct async_completion {
-        using completion_handler_type = typename async_result<std::decay_t<CompletionToken>, Signature>::completion_handler_type;
+template <typename CompletionToken, typename Signature>
+struct async_completion
+{
+  using completion_handler_type = typename async_result<
+      std::decay_t<CompletionToken>, Signature>::completion_handler_type;
 
-        mutable completion_handler_type completion_handler;
-        async_result<std::decay_t<CompletionToken>, Signature> result;
+  mutable completion_handler_type completion_handler;
+  async_result <std::decay_t<CompletionToken>, Signature> result;
 
-        explicit async_completion(CompletionToken &u)
-            : completion_handler(std::forward<CompletionToken>(u))
-            , result(completion_handler)
-        {}
-    };
+  explicit async_completion(CompletionToken &token)
+      : completion_handler(std::forward<CompletionToken>(token)),
+        result(completion_handler)
+  {
+  }
+};
+
 }
 
 #endif //ASYNCNET_ASYNC_COMPLETION_HPP

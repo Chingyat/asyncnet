@@ -13,39 +13,48 @@
 
 namespace asyncnet {
 
-    system_context::system_context() : _work(_work_io_context.get_executor()) {
-        std::generate_n(std::back_inserter(_threads), num_threads, [this] {
-            return std::thread([this] { _work_io_context.run(); });
-        });
-    }
+system_context::system_context() : work_(work_io_context_.get_executor())
+{
+  std::generate_n(std::back_inserter(threads_), num_threads, [this]
+  {
+    return std::thread([this] { work_io_context_.run(); });
+  });
+}
 
-    system_context::~system_context() noexcept {
-        stop();
-        join();
-    }
+system_context::~system_context() noexcept
+{
+  stop();
+  join();
+}
 
-    void system_context::stop() {
-        _work.reset();
-        _work_io_context.stop();
-    }
+void system_context::stop()
+{
+  work_.reset();
+  work_io_context_.stop();
+}
 
-    void system_context::join() {
-        for (auto &t : _threads)
-            t.join();
-    }
+void system_context::join()
+{
+  for (auto &t : threads_)
+    t.join();
+}
 
-    bool system_context::stopped() const {
-        return _work_io_context.stopped();
-    }
+bool system_context::stopped() const
+{
+  return work_io_context_.stopped();
+}
 
-    system_context::executor_type system_context::get_executor() {
-        return {};
-    }
+system_context::executor_type system_context::get_executor()
+{
+  return {};
+}
 
-    system_context &system_context::get_system_context() {
-        static system_context i;
-        return i;
-    }
+system_context &system_context::get_system_context()
+{
+  static system_context i;
+  return i;
+}
+
 }
 
 #endif //ASYNCNET_IMPL_SYSTEM_CONTEXT_IPP

@@ -10,15 +10,15 @@
 #include <atomic>
 
 namespace asyncnet {
-    namespace detail {
+namespace detail {
 
-        unsigned long key_counter_inc()
-        {
-            static std::atomic_ulong counter{0};
-            return ++counter;
-        }
+unsigned long key_counter_inc()
+{
+  static std::atomic_ulong counter{0};
+  return ++counter;
+}
 
-    }
+}
 }
 
 #endif //ASYNCNET_DETAIL_IMPL_KEY_INDEX_IPP

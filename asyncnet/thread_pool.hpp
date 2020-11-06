@@ -12,30 +12,30 @@
 
 namespace asyncnet {
 
-    class thread_pool {
-    public:
-        class executor_type;
+class thread_pool
+{
+public:
+  class executor_type;
 
-        thread_pool();
+  thread_pool();
 
-        explicit thread_pool(std::size_t nthreads);
+  explicit thread_pool(std::size_t nthreads);
 
-        thread_pool(const thread_pool &) = delete;
+  thread_pool(const thread_pool &) = delete;
 
-        thread_pool &operator=(const thread_pool &) = delete;
+  thread_pool &operator=(const thread_pool &) = delete;
 
-        ~thread_pool() noexcept;
+  ~thread_pool() noexcept;
 
-        executor_type get_executor();
+  executor_type get_executor();
 
-        void stop();
+  void stop();
 
-        void join();
+  void join();
 
-
-    private:
-        std::atomic_bool _stop_called;
-    };
+private:
+  std::atomic_bool _stop_called;
+};
 
 }
 

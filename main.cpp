@@ -8,7 +8,7 @@
 using namespace asyncnet;
 
 
-static uint n{0};
+static std::atomic<std::uint32_t> n{0};
 
 void handler() {
     ++n;

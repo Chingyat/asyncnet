@@ -8,105 +8,142 @@
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/async_result.hpp>
 #include <asyncnet/detail/wrapped_handler.hpp>
+#include <asyncnet/detail/intrusive_list.hpp>
 
 #include <mutex>
 #include <condition_variable>
-#include <list>
 #include <atomic>
 #include <thread>
-#include <vector>
 
 namespace asyncnet {
 
-    /// models ExecutionContext
-    class io_context : public execution_context {
-    public:
-        class executor_type;
+/// models ExecutionContext
+class io_context : public execution_context
+{
+public:
+  class executor_type;
 
-        using count_type = unsigned int;
+  using count_type = unsigned int;
 
-        io_context();
+  /// Default constructor.
+  io_context();
 
-        explicit io_context(int concurrency_hint);
+  /// Constructor.
+  explicit io_context(int concurrency_hint);
 
-        ~io_context() noexcept;
+  /// Destructor.
+  ~io_context() noexcept;
 
-        executor_type get_executor();
+  /// Returns an executor of the io_context.
+  executor_type get_executor();
 
-        void notify_fork(fork_event);
+  /// Notify to io_context that the process is forked.
+  void notify_fork(fork_event e);
 
-        /// Run the io_context event processing loop to execute ready handlers.
-        count_type poll();
+  /// Run the io_context event processing loop to execute ready handlers.
+  count_type poll();
 
-        /// Run the io_context event processing loop to execute one ready handler.
-        count_type poll_one();
+  /// Run the io_context event processing loop to execute one ready handler.
+  count_type poll_one();
 
-        /// Restart the io_context in preparation for a subsequent run() invocation.
-        /// This function is not thread-safe.
-        void restart();
+  /// Restart the io_context in preparation for a subsequent run() invocation.
+  /// This function is not thread-safe.
+  void restart();
 
-        /// Run the io_context object's event processing loop.
-        count_type run();
+  /// Run the io_context object's event processing loop.
+  count_type run();
 
-        /// Run the io_context object's event processing loop to execute at most one handler.
-        count_type run_one();
+  /// Run the io_context object's event processing loop to execute at most one handler.
+  count_type run_one();
 
-        /// Stop the io_context objects' event processing loop.
-        void stop();
+  /// Stop the io_context objects' event processing loop.
+  void stop();
 
-        /// Determine whether the io_context object has been stopped.
-        bool stopped() const { return _stopped; }
+  /// Determine whether the io_context object has been stopped.
+  bool stopped() const { return stopped_; }
 
-    private:
-        mutable std::mutex _mutex;
-        std::condition_variable _cond;
-        std::list<detail::wrapped_handler<void()>> _compq;
+private:
 
-        std::atomic_bool _stopped{false};
+  /// Mutex that guards the completion handler queue.
+  mutable std::mutex mutex_;
 
-        std::atomic<count_type> _work_count{0};
+  /// Used to notify threads that running this io_context.
+  std::condition_variable cond_;
 
-        static std::vector<executor_type> &_thread_run_stack();
+  /// Completion handler queue.
+  detail::intrusive_list<detail::handler_base<void()>> comp_queue_;
 
-        struct run_stack_guard;
-    };
+  /// Indicates whether the io_context has been stopped.
+  std::atomic_bool stopped_{false};
 
-    class io_context::executor_type {
-        friend io_context;
+  /// Number of works in operation.
+  std::atomic<count_type> outstanding_work_count_{0};
 
-    public:
-        executor_type(const executor_type &) = default;
+  struct executor_stack_entry;
 
-        executor_type &operator=(const executor_type &) = default;
+  /// Thread local stack of running io_context executors.
+  /// This can be used to determine if the current thread is running the io_context.
+  /// Todo: Eliminate the dynamic allocations.
+  static detail::intrusive_list<executor_stack_entry> &thread_local_executor_stack();
 
-        io_context &context() const { assert(_context); return *_context; }
+  /// RAII guard that pushes and pops the thread local executor stack.
+  struct run_stack_guard;
+};
 
-        bool running_in_this_thread() const;
+class io_context::executor_type
+{
+  friend class io_context;
 
-        template<typename Function, typename ProtoAllocator>
-        void post(Function &&f, const ProtoAllocator &a) const;
+public:
+  /// Copy constructor.
+  executor_type(const executor_type &) = default;
 
-        template<typename Function, typename ProtoAllocator>
-        void dispatch(Function &&f, const ProtoAllocator &a) const;
+  /// Copy assignment.
+  executor_type &operator=(const executor_type &) = default;
 
+  /// Returns the io_context.
+  io_context &context() const
+  {
+    assert(context_);
+    return *context_;
+  }
 
-        void on_work_finished() const noexcept;
+  /// Indicates whether the calling thread is running the io_context.
+  bool running_in_this_thread() const;
 
-        void on_work_started() const noexcept;
+  /// Submit a function object to the completion queue.
+  template <typename Function, typename ProtoAllocator>
+  void post(Function &&f, const ProtoAllocator &a) const;
 
-        friend bool operator==(const executor_type &x, const executor_type &y) noexcept {
-            return std::addressof(x.context()) == std::addressof(y.context());
-        }
+  /// If running_in_this_thread() returns true, then f will be invoked immediately.
+  /// Otherwise the function object will be submit to the completion queue.
+  template <typename Function, typename ProtoAllocator>
+  void dispatch(Function &&f, const ProtoAllocator &a) const;
 
-        friend bool operator!=(const executor_type &x, const executor_type &y) noexcept {
-            return !(x == y);
-        }
+  /// Notifies the io_context that an asynchronous operation has completed.
+  void on_work_finished() const noexcept;
 
-    private:
-        explicit executor_type(io_context &context) noexcept;
+  /// Notifies the io_context that an asynchronous operation has started.
+  void on_work_started() const noexcept;
 
-        io_context *_context;
-    };
+  /// Equality operator.
+  friend bool operator==(const executor_type &x, const executor_type &y) noexcept
+  {
+    return std::addressof(x.context()) == std::addressof(y.context());
+  }
+
+  friend bool operator!=(const executor_type &x, const executor_type &y) noexcept
+  {
+    return !(x == y);
+  }
+
+private:
+  /// Creates an executor from the execution context.
+  explicit executor_type(io_context &context) noexcept;
+
+  /// The io_context that the executor belongs to.
+  io_context *context_;
+};
 
 
 }

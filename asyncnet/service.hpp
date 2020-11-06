@@ -9,20 +9,20 @@
 
 namespace asyncnet {
 
-    class execution_context::service {
-        friend execution_context;
+class execution_context::service
+{
+  friend execution_context;
 
-    public:
-        explicit service(execution_context &context) {}
+public:
+  explicit service(execution_context &context) {}
 
-        virtual ~service() = default;
+  virtual ~service() = default;
 
-    private:
-        virtual void shutdown() noexcept = 0;
+private:
+  virtual void shutdown() noexcept = 0;
 
-        virtual void notify_fork() {}
-    };
-
+  virtual void notify_fork(fork_event e) {}
+};
 
 }
 

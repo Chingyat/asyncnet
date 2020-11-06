@@ -9,28 +9,31 @@
 #include <asyncnet/executor.hpp>
 
 namespace asyncnet {
-    class system_context;
 
-    class system_executor {
-    public:
-        system_executor();
+class system_context;
 
-        system_context &context() const;
+class system_executor
+{
+public:
+  system_executor() = default;
 
-        template<typename Function, typename ProtoAllocator>
-        void post(Function &&f, const ProtoAllocator &a);
+  system_context &context() const;
 
-        template<typename Function, typename ProtoAllocator>
-        void dispatch(Function &&f, const ProtoAllocator &a);
+  template <typename Function, typename ProtoAllocator>
+  void post(Function &&f, const ProtoAllocator &a);
 
-        void on_work_started() const noexcept;
+  template <typename Function, typename ProtoAllocator>
+  void dispatch(Function &&f, const ProtoAllocator &a);
 
-        void on_work_finished() const noexcept;
+  void on_work_started() const noexcept;
 
-        friend bool operator==(const system_executor &, const system_executor &) noexcept { return true; }
+  void on_work_finished() const noexcept;
 
-        friend bool operator!=(const system_executor &, const system_executor &) noexcept { return false; }
-    };
+  friend bool operator==(const system_executor &, const system_executor &) noexcept { return true; }
+
+  friend bool operator!=(const system_executor &, const system_executor &) noexcept { return false; }
+};
+
 }
 
 #include <asyncnet/impl/system_executor.hpp>

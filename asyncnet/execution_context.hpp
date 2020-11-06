@@ -8,63 +8,66 @@
 
 namespace asyncnet {
 
-    class execution_context;
+class execution_context;
 
-    class service_already_exist : public std::logic_error {
-    public:
-        service_already_exist()
-                : std::logic_error("service_already_exist") {}
-    };
+class service_already_exist : public std::logic_error
+{
+public:
+  service_already_exist()
+      : std::logic_error("service_already_exist") {}
+};
 
-    template<typename Service>
-    Service &use_service(execution_context &context);
+template <typename Service>
+Service &use_service(execution_context &context);
 
-    template<typename Service, typename ...Args>
-    Service &make_service(execution_context &context, Args &&...args);
+template <typename Service, typename ...Args>
+Service &make_service(execution_context &context, Args &&...args);
 
-    template<typename Service>
-    bool has_service(const execution_context &context);
-
-
-    class execution_context {
-        template<typename Service>
-        friend Service &use_service(execution_context &context);
-
-        template<typename Service, typename ...Args>
-        friend Service &make_service(execution_context &context, Args &&...args);
-
-        template<typename Service>
-        friend bool has_service(const execution_context &context);
-
-    public:
-        class service;
-
-        execution_context() = default;
-
-        execution_context(const execution_context &) = delete;
-
-        execution_context &operator=(const execution_context) = delete;
+template <typename Service>
+bool has_service(const execution_context &context);
 
 
-        enum fork_event {
+class execution_context
+{
+  template <typename Service>
+  friend Service &use_service(execution_context &context);
 
-        };
+  template <typename Service, typename ...Args>
+  friend Service &make_service(execution_context &context, Args &&...args);
 
-        void notify_fork(fork_event e);
+  template <typename Service>
+  friend bool has_service(const execution_context &context);
 
-    protected:
-        ~execution_context() noexcept;
+public:
+  class service;
 
-        void shutdown() noexcept;
+  execution_context() = default;
 
-        void destroy() noexcept;
+  execution_context(const execution_context &) = delete;
 
-    private:
-        using service_index_type = unsigned long;
+  execution_context &operator=(const execution_context) = delete;
 
-        mutable std::recursive_mutex _mutex;
-        std::vector<std::pair<std::unique_ptr<service>, service_index_type> > _services;
-    };
+
+  enum fork_event
+  {
+
+  };
+
+  void notify_fork(fork_event e);
+
+protected:
+  ~execution_context() noexcept;
+
+  void shutdown() noexcept;
+
+  void destroy() noexcept;
+
+private:
+  using service_index_type = unsigned long;
+
+  mutable std::recursive_mutex mutex_;
+  std::vector<std::pair<std::unique_ptr<service>, service_index_type> > services_;
+};
 
 }
 
