@@ -7,7 +7,7 @@
 
 #include <asyncnet/service.hpp>
 #include <asyncnet/detail/config.hpp>
-#include <asyncnet/detail/wrapped_handler.hpp>
+#include <asyncnet/detail/handler_base.hpp>
 
 namespace asyncnet {
 namespace posix {

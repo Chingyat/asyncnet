@@ -5,11 +5,11 @@
 #ifndef ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP
 #define ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP
 
-#include <asyncnet/detail/intrusive_list_node.hpp>
 #include <asyncnet/detail/intrusive_list_iterator.hpp>
+#include <asyncnet/detail/intrusive_list_node.hpp>
 
-#include <type_traits>
 #include <cassert>
+#include <type_traits>
 
 namespace asyncnet {
 namespace detail {
@@ -22,12 +22,10 @@ public:
   using reference = T &;
   using node_type = T;
   using pointer = T *;
-  using node_ptr = intrusive_list_node<T> *;
   using iterator = intrusive_list_iterator<T>;
   using const_iterator = intrusive_list_iterator<std::add_const_t<T>>;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
 
   constexpr intrusive_list() noexcept = default;
 
@@ -131,13 +129,13 @@ public:
     node.prev = old.prev;
     node.prev->next = &node;
 
-    old.reinit_list_node();
+    old.init();
   }
 
   void erase(reference node)
   {
     delete_entry(&node);
-    node.reinit_list_node();
+    node.init();
   }
 
   void erase(iterator pos)
@@ -165,6 +163,8 @@ public:
   }
 
 private:
+  using node_ptr = intrusive_list_node<T> *;
+
   static void insert_between(node_ptr node, node_ptr prev, node_ptr next) noexcept
   {
     next->prev = node;
@@ -189,6 +189,6 @@ private:
 };
 
 }
-}
+} // namespace asyncnet::detail
 
 #endif //ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP

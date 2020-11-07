@@ -14,7 +14,7 @@ set(ASYNCNET_HEADERS
         asyncnet/detail/impl/key_index.ipp
         asyncnet/detail/key_index.hpp
         asyncnet/detail/move_only.hpp
-        asyncnet/detail/wrapped_handler.hpp
+        asyncnet/detail/handler_base.hpp
         asyncnet/dispatch.hpp
         asyncnet/execution_context.hpp
         asyncnet/executor.hpp
@@ -38,8 +38,16 @@ set(ASYNCNET_HEADERS
         asyncnet/system_context.hpp
         asyncnet/system_executor.hpp
         asyncnet/thread_pool.hpp
-        asyncnet/detail/intrusive_list_node.hpp asyncnet/detail/intrusive_list.hpp asyncnet/detail/intrusive_list_iterator.hpp asyncnet/detail/config.hpp asyncnet/posix/reactor.h)
+        asyncnet/detail/intrusive_list_node.hpp
+        asyncnet/detail/intrusive_list.hpp
+        asyncnet/detail/intrusive_list_iterator.hpp
+        asyncnet/detail/config.hpp
+        asyncnet/posix/reactor.h)
 
 include_directories(.)
-add_executable(asyncnet main.cpp ${ASYNCNET_HEADERS})
-target_link_libraries(asyncnet PRIVATE Threads::Threads)
+add_library(asyncnet STATIC lib/src.cpp ${ASYNCNET_HEADERS})
+target_link_libraries(asyncnet LINK_PUBLIC Threads::Threads)
+#target_compile_definitions(asyncnet PUBLIC "ASYNCNET_SEPARATE_COMPILATION")
+
+add_executable(asyncnet_test main.cpp)
+target_link_libraries(asyncnet_test PRIVATE asyncnet)

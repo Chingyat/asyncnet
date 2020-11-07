@@ -7,8 +7,8 @@
 
 #include <asyncnet/detail/config.hpp>
 #include <asyncnet/execution_context.hpp>
-#include <asyncnet/io_context.hpp>
 #include <asyncnet/executor_work_guard.hpp>
+#include <asyncnet/io_context.hpp>
 
 #include <atomic>
 #include <thread>
@@ -54,16 +54,16 @@ private:
   io_context work_io_context_;
 
   /// Threads.
-  std::vector<std::thread> threads_;
+  std::vector<std::thread> work_threads_;
 
   /// Prevents work_io_context_ from exiting.
   executor_work_guard<io_context::executor_type> work_;
 };
 
-}
+} // namespace asyncnet
 
 #ifdef ASYNCNET_HEADER_ONLY
-# include <asyncnet/impl/system_context.ipp>
+#  include <asyncnet/impl/system_context.ipp>
 #endif
 
 #endif //ASYNCNET_SYSTEM_CONTEXT_HPP

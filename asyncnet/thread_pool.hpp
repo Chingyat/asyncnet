@@ -5,8 +5,8 @@
 #ifndef ASYNCNET_THREAD_POOL_HPP
 #define ASYNCNET_THREAD_POOL_HPP
 
-#include <asyncnet/execution_context.hpp>
 #include <asyncnet/async_result.hpp>
+#include <asyncnet/execution_context.hpp>
 
 #include <atomic>
 
@@ -37,6 +37,6 @@ private:
   std::atomic_bool _stop_called;
 };
 
-}
+} // namespace asyncnet
 
 #endif //ASYNCNET_THREAD_POOL_HPP

@@ -5,8 +5,8 @@
 #ifndef ASYNCNET_IMPL_SYSTEM_EXECUTOR_IPP
 #define ASYNCNET_IMPL_SYSTEM_EXECUTOR_IPP
 
-#include <asyncnet/system_executor.hpp>
 #include <asyncnet/system_context.hpp>
+#include <asyncnet/system_executor.hpp>
 
 namespace asyncnet {
 
@@ -25,8 +25,6 @@ void system_executor::on_work_started() const noexcept
   context().work_io_context_.get_executor().on_work_started();
 }
 
-system_executor const static_executor{};
-
-}
+} // namespace asyncnet
 
 #endif //ASYNCNET_IMPL_SYSTEM_EXECUTOR_IPP

@@ -5,10 +5,12 @@
 #ifndef ASYNCNET_DETAIL_KEY_INDEX_HPP
 #define ASYNCNET_DETAIL_KEY_INDEX_HPP
 
+#include <asyncnet/detail/config.hpp>
+
 namespace asyncnet {
 namespace detail {
 
-unsigned long key_counter_inc();
+ASYNCNET_DECL unsigned long key_counter_inc() noexcept;
 
 template <typename Key>
 unsigned long key_index()
@@ -19,5 +21,9 @@ unsigned long key_index()
 
 }
 }
+
+#ifdef ASYNCNET_HEADER_ONLY
+# include <asyncnet/detail/impl/key_index.ipp>
+#endif
 
 #endif //ASYNCNET_DETAIL_KEY_INDEX_HPP
