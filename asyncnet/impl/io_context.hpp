@@ -16,7 +16,7 @@ void io_context::executor_type::post(
 {
   {
     std::lock_guard<std::mutex> lock(context().mutex_);
-    context().comp_queue_.push_back(detail::allocate_handler<void()>(std::forward<Function>(f), a));
+    context().comp_queue_.push_back(*detail::allocate_handler<void()>(std::forward<Function>(f), a));
   }
 
   context().cond_.notify_one();

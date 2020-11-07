@@ -6,6 +6,7 @@
 #define ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP
 
 #include <asyncnet/detail/intrusive_list_node.hpp>
+#include <asyncnet/detail/intrusive_list_iterator.hpp>
 
 #include <type_traits>
 #include <cassert>
@@ -17,13 +18,16 @@ template <typename T>
 class intrusive_list
 {
 public:
+  using value_type = std::decay_t<T>;
+  using reference = T &;
   using node_type = T;
   using pointer = T *;
-  using node_ptr = intrusive_list_node <T> *;
+  using node_ptr = intrusive_list_node<T> *;
   using iterator = intrusive_list_iterator<T>;
+  using const_iterator = intrusive_list_iterator<std::add_const_t<T>>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-  static_assert(std::is_base_of<intrusive_list_node < T>, T > ::value,
-                "list node must inherits from intrusive_list_node<T>");
 
   constexpr intrusive_list() noexcept = default;
 
@@ -31,130 +35,126 @@ public:
 
   intrusive_list &operator=(const intrusive_list &) = delete;
 
-  iterator begin()
+  iterator begin() noexcept
   {
     return iterator{head_.next};
   }
 
-  iterator end()
+  iterator end() noexcept
   {
     return iterator{&head_};
   }
 
-  void push_front(pointer node) noexcept
+  const_iterator begin() const noexcept
   {
-    insert_between(node, &head_, head_.next);
+    return const_iterator{head_.next};
   }
 
-  void push_back(pointer node) noexcept
+  const_iterator end() const noexcept
   {
-    insert_between(node, head_.prev, &head_);
+    return const_iterator{&head_};
   }
 
-  static void remove(pointer node) noexcept
+  const_iterator cbegin() const noexcept
   {
-    delete_entry(node);
-    node->prev = poison;
-    node->next = poison;
+    return begin();
   }
 
-  static void replace(pointer old, pointer node) noexcept
+  const_iterator cend() const noexcept
   {
-    node->next = old->next;
-    node->next->prev = node;
-    node->prev = old->prev;
-    node->prev->next = node;
+    return end();
   }
 
-  static void replace_init(pointer old, pointer node) noexcept
+  reverse_iterator rbegin() noexcept
   {
-    replace(old, node);
-    old->reinit_list_node();
+    return reverse_iterator(end());
   }
 
-  static void remove_init(pointer node) noexcept
+  reverse_iterator rend() noexcept
   {
-    delete_entry(node);
-    node->reinit_list_node();
+    return reverse_iterator(begin());
   }
 
-  void remove_and_push_back(pointer list) noexcept
+  const_reverse_iterator rbegin() const noexcept
   {
-    delete_entry(list);
-    push_back(list);
+    return const_reverse_iterator(end());
   }
 
-  void remove_and_push_front(pointer list) noexcept
+  const_reverse_iterator rend() const noexcept
   {
-    delete_entry(list);
-    push_front(list);
+    return const_reverse_iterator(end());
   }
 
-  pointer back() const noexcept
+  const_reverse_iterator crbegin() const noexcept
   {
-    assert(!empty());
-    return pointer(head_.prev);
+    return rbegin();
   }
 
-  pointer front() const noexcept
+  const_reverse_iterator crend() const noexcept
   {
-    assert(!empty());
-    return pointer(head_.next);
+    return rend();
   }
 
+  /// Indicates whether the list is empty.
+  /// Complexity: constant.
   bool empty() const noexcept
   {
     return head_.next == &head_;
   }
 
-  void move_front_to_back() noexcept
+  void push_front(reference node) noexcept
   {
-    if (!empty())
-    {
-      auto first = front();
-      remove_and_push_back(first);
-    }
+    delete_entry(&node);
+    insert_between(&node, &head_, head_.next);
   }
 
-  void move_back_to_front() noexcept
+  void push_back(reference node) noexcept
   {
-    if (!empty())
-    {
-      auto last = back();
-      remove_and_push_front(last);
-    }
+    delete_entry(&node);
+    insert_between(&node, head_.prev, &head_);
   }
 
+  static void replace(reference old, reference node) noexcept
+  {
+    node.next = old.next;
+    node.next->prev = &node;
+    node.prev = old.prev;
+    node.prev->next = &node;
+
+    old.reinit_list_node();
+  }
+
+  void erase(reference node)
+  {
+    delete_entry(&node);
+    node.reinit_list_node();
+  }
+
+  void erase(iterator pos)
+  {
+    erase(*pos);
+  }
+
+  reference back() const
+  {
+    assert(!empty());
+    return *pointer(head_.prev);
+  }
+
+  reference front() const
+  {
+    assert(!empty());
+    return *pointer(head_.next);
+  }
+
+  /// Tests whether the list has exactly one elements.
+  /// Complexity: constant.
   bool is_singular() const noexcept
   {
     return !empty() && (head_.next == head_.prev);
   }
 
-  void move_front_nodes_to(intrusive_list &list, pointer entry)
-  {
-    if (empty())
-      return;
-
-    if (is_singular() && front() != entry && &head_ != entry)
-      return;
-
-    if (entry == &head_)
-    {
-      list.head_.reinit_list_node();
-      return;
-    }
-
-    pointer new_first = entry->next;
-    list->next = front();
-    list->next->prev = list;
-    list->prev = entry;
-    entry->next = list;
-    front() = new_first;
-    new_first->prev = &head_;
-  }
-
 private:
-
   static void insert_between(node_ptr node, node_ptr prev, node_ptr next) noexcept
   {
     next->prev = node;
@@ -175,14 +175,8 @@ private:
   }
 
   // Use next as the head and prev as the tail.
-  intrusive_list_node <T> head_;
-
-  static const pointer poison;
+  intrusive_list_node<T> head_;
 };
-
-template <typename T>
-const typename intrusive_list<T>::pointer intrusive_list<T>::poison = reinterpret_cast<pointer>(0xdeaddead);
-
 
 }
 }

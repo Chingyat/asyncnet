@@ -1,6 +1,8 @@
 #ifndef ASYNCNET_EXECUTION_CONTEXT_HPP
 #define ASYNCNET_EXECUTION_CONTEXT_HPP
 
+#include <asyncnet/detail/config.hpp>
+#include <asyncnet/detail/intrusive_list.hpp>
 #include <memory>
 #include <vector>
 #include <mutex>
@@ -53,20 +55,21 @@ public:
 
   };
 
-  void notify_fork(fork_event e);
+  ASYNCNET_DECL void notify_fork(fork_event e);
 
 protected:
   ~execution_context() noexcept;
 
-  void shutdown() noexcept;
+  ASYNCNET_DECL void shutdown() noexcept;
 
-  void destroy() noexcept;
+  ASYNCNET_DECL void destroy() noexcept;
 
 private:
-  using service_index_type = unsigned long;
+  ASYNCNET_DECL static void set_service_index(service &svc, unsigned long index);
+  ASYNCNET_DECL static unsigned long get_service_index(const service &svc);
 
   mutable std::recursive_mutex mutex_;
-  std::vector<std::pair<std::unique_ptr<service>, service_index_type> > services_;
+  detail::intrusive_list<service> services_;
 };
 
 }

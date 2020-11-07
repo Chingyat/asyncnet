@@ -5,6 +5,7 @@
 #ifndef ASYNCNET_SYSTEM_CONTEXT_HPP
 #define ASYNCNET_SYSTEM_CONTEXT_HPP
 
+#include <asyncnet/detail/config.hpp>
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/io_context.hpp>
 #include <asyncnet/executor_work_guard.hpp>
@@ -25,26 +26,26 @@ public:
   using executor_type = system_executor;
 
   /// Returns an system_executor.
-  executor_type get_executor();
+  ASYNCNET_DECL executor_type get_executor();
 
   /// Waits for all threads in the system thread pool to join.
-  void join();
+  ASYNCNET_DECL void join();
 
   /// Stops the system thread pool.
-  void stop();
+  ASYNCNET_DECL void stop();
 
   /// Indicates whether stop() has been called.
-  bool stopped() const;
+  ASYNCNET_DECL bool stopped() const;
 
   /// Destructor.
-  ~system_context() noexcept;
+  ASYNCNET_DECL ~system_context() noexcept;
 
 private:
   /// Constructor.
-  system_context();
+  ASYNCNET_DECL system_context();
 
   /// Returns the system_context singleton.
-  static system_context &get_system_context();
+  ASYNCNET_DECL static system_context &get_system_context();
 
   /// Number of threads in the system thread pool.
   static const std::size_t num_threads = 4;
@@ -60,5 +61,9 @@ private:
 };
 
 }
+
+#ifdef ASYNCNET_HEADER_ONLY
+# include <asyncnet/impl/system_context.ipp>
+#endif
 
 #endif //ASYNCNET_SYSTEM_CONTEXT_HPP

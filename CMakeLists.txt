@@ -38,7 +38,7 @@ set(ASYNCNET_HEADERS
         asyncnet/system_context.hpp
         asyncnet/system_executor.hpp
         asyncnet/thread_pool.hpp
-        asyncnet/detail/intrusive_list_node.hpp asyncnet/detail/intrusive_list.hpp)
+        asyncnet/detail/intrusive_list_node.hpp asyncnet/detail/intrusive_list.hpp asyncnet/detail/intrusive_list_iterator.hpp asyncnet/detail/config.hpp asyncnet/posix/reactor.h)
 
 include_directories(.)
 add_executable(asyncnet main.cpp ${ASYNCNET_HEADERS})

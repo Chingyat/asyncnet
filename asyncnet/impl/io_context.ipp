@@ -11,12 +11,12 @@
 
 namespace asyncnet {
 
-io_context::io_context(int concurrency_hint)
+io_context::io_context(int concurrency_hint) noexcept
 {
   (void)concurrency_hint;
 }
 
-io_context::io_context() : io_context(3) {}
+io_context::io_context() noexcept : io_context(1) {}
 
 io_context::~io_context() noexcept = default;
 
@@ -43,13 +43,13 @@ struct io_context::run_stack_guard
 
   explicit run_stack_guard(io_context &context) : entry_{context.get_executor()}
   {
-    thread_local_executor_stack().push_back(&entry_);
+    thread_local_executor_stack().push_back(entry_);
   }
 
   ~run_stack_guard() noexcept
   {
-    assert(&entry_ == thread_local_executor_stack().back());
-    thread_local_executor_stack().remove(&entry_);
+    assert(&entry_ == &thread_local_executor_stack().back());
+    thread_local_executor_stack().erase(entry_);
   }
 };
 
@@ -61,11 +61,11 @@ io_context::count_type io_context::poll_one()
   if (comp_queue_.empty())
     return 0;
 
-  auto h = comp_queue_.front();
-  comp_queue_.remove(h);
+  auto &h = comp_queue_.front();
+  comp_queue_.erase(h);
   lock.unlock();
 
-  h->invoke();
+  h.invoke();
   return 1;
 }
 
@@ -90,11 +90,11 @@ io_context::count_type io_context::run_one()
   if (comp_queue_.empty())
     return 0;
 
-  auto h = comp_queue_.front();
-  comp_queue_.remove(h);
+  auto &h = comp_queue_.front();
+  comp_queue_.erase(h);
   lock.unlock();
 
-  h->invoke();
+  h.invoke();
   return 1;
 }
 

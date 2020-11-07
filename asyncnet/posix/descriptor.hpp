@@ -7,6 +7,7 @@
 
 #include <asyncnet/service.hpp>
 #include <asyncnet/async_completion.hpp>
+#include <asyncnet/posix/reactor.h>
 
 #include <unistd.h>
 
@@ -71,6 +72,9 @@ public:
     /// The state of the descriptor
     descriptor_state state_;
 
+    /// Data used by reactor.
+    detail::reactor::per_descriptor_data reactor_data_;
+
   };
 
   /// Constructs a descriptor service.
@@ -117,7 +121,7 @@ public:
   std::error_code set_nonblocking(implementation_type &impl, bool mode);
 
   /// Asynchronous waits for events.
-  template<typename WaitHandler>
+  template <typename WaitHandler>
   void async_wait(descriptor_base::wait_type w, WaitHandler &&handler);
 
 private:
@@ -126,7 +130,7 @@ private:
 };
 }
 
-template<typename Executor>
+template <typename Executor>
 class basic_descriptor : public descriptor_base
 {
 public:
@@ -152,8 +156,7 @@ public:
   }
 
   basic_descriptor(basic_descriptor &&other) noexcept
-      : ex_(other.get_executor())
-        , service_(&other.get_service())
+      : ex_(other.get_executor()), service_(&other.get_service())
   {
     get_service().move_construct(impl_, other.get_implementation());
   }
@@ -179,15 +182,15 @@ public:
 
   // operations
 
-  template<typename CompletionToken>
+  template <typename CompletionToken>
   typename async_result<CompletionToken, void(std::error_code)>::result_type
   async_wait(wait_type wt, CompletionToken &&token);
 
-  template<typename MutableBufferSequence, typename CompletionToken>
+  template <typename MutableBufferSequence, typename CompletionToken>
   typename async_result<CompletionToken, void(std::error_code)>::result_type
   async_receive(const MutableBufferSequence &bs, CompletionToken &&token);
 
-  template<typename MutableBufferSequence, typename CompletionToken>
+  template <typename MutableBufferSequence, typename CompletionToken>
   typename async_result<CompletionToken, void(std::error_code)>::result_type
   async_send(const MutableBufferSequence &bs, CompletionToken &&token);
 

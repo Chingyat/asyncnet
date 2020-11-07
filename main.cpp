@@ -7,27 +7,57 @@
 
 using namespace asyncnet;
 
+class test_service : public execution_context::service
+{
+public:
+  using key_type = test_service;
 
-static std::atomic<std::uint32_t> n{0};
+  explicit test_service(execution_context &c) : service(c)
+  {
 
-void handler() {
-    ++n;
-}
+  }
 
-static io_context ioc;
+  void shutdown() noexcept override
+  {
 
-int main() {
+  }
+};
 
-    std::list<std::thread> threads;
-    for (int i = 0; i != 100; ++i)
-        threads.emplace_back(&io_context::run,
-                             &ioc);
+static std::atomic_int n{0};
 
-    for (int j = 0; j != 10000000; ++j)
-        post(ioc, handler);
+struct handler
+{
+  std::array<char, 100> obj;
 
-    for (auto &t: threads)
-        t.join();
+  handler() = default;
 
-    std::cout << n << std::endl;
+  int operator()()
+  {
+    std::fill(obj.begin(), obj.end(), n);
+    return ++n;
+  }
+};
+
+int main()
+{
+  static io_context ioc;
+
+  use_service<test_service>(ioc);
+
+  std::list<std::thread> threads;
+  auto w = make_work(ioc);
+
+  for (int i = 0; i != 100; ++i)
+    threads.emplace_back(&io_context::run,
+                         &ioc);
+
+  for (int j = 0; j != 10000; ++j)
+    post(ioc, handler());
+
+  w.reset();
+
+  for (auto &t: threads)
+    t.join();
+
+  std::cout << n << std::endl;
 }

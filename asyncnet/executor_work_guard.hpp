@@ -81,7 +81,7 @@ executor_work_guard<Executor> make_work(const Executor &ex)
 }
 
 template <typename ExecutionContext, std::enable_if_t<std::is_base_of<execution_context, ExecutionContext>::value, int> = 0>
-executor_work_guard<typename ExecutionContext::executor_type> make_work(const ExecutionContext &context)
+executor_work_guard<typename ExecutionContext::executor_type> make_work(ExecutionContext &context)
 {
   return executor_work_guard<typename ExecutionContext::executor_type>(context.get_executor());
 }

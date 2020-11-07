@@ -5,6 +5,7 @@
 #ifndef ASYNCNET_IO_CONTEXT_HPP
 #define ASYNCNET_IO_CONTEXT_HPP
 
+#include <asyncnet/detail/config.hpp>
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/async_result.hpp>
 #include <asyncnet/detail/wrapped_handler.hpp>
@@ -26,41 +27,41 @@ public:
   using count_type = unsigned int;
 
   /// Default constructor.
-  io_context();
+  ASYNCNET_DECL io_context() noexcept;
 
   /// Constructor.
-  explicit io_context(int concurrency_hint);
+  ASYNCNET_DECL  explicit io_context(int concurrency_hint) noexcept;
 
   /// Destructor.
-  ~io_context() noexcept;
+  ASYNCNET_DECL ~io_context() noexcept;
 
   /// Returns an executor of the io_context.
-  executor_type get_executor();
+  ASYNCNET_DECL executor_type get_executor();
 
   /// Notify to io_context that the process is forked.
-  void notify_fork(fork_event e);
+  ASYNCNET_DECL void notify_fork(fork_event e);
 
   /// Run the io_context event processing loop to execute ready handlers.
-  count_type poll();
+  ASYNCNET_DECL count_type poll();
 
   /// Run the io_context event processing loop to execute one ready handler.
-  count_type poll_one();
+  ASYNCNET_DECL count_type poll_one();
 
   /// Restart the io_context in preparation for a subsequent run() invocation.
   /// This function is not thread-safe.
-  void restart();
+  ASYNCNET_DECL void restart();
 
   /// Run the io_context object's event processing loop.
-  count_type run();
+  ASYNCNET_DECL count_type run();
 
   /// Run the io_context object's event processing loop to execute at most one handler.
-  count_type run_one();
+  ASYNCNET_DECL count_type run_one();
 
   /// Stop the io_context objects' event processing loop.
-  void stop();
+  ASYNCNET_DECL void stop();
 
   /// Determine whether the io_context object has been stopped.
-  bool stopped() const { return stopped_; }
+  ASYNCNET_DECL bool stopped() const { return stopped_; }
 
 private:
 
@@ -83,8 +84,7 @@ private:
 
   /// Thread local stack of running io_context executors.
   /// This can be used to determine if the current thread is running the io_context.
-  /// Todo: Eliminate the dynamic allocations.
-  static detail::intrusive_list<executor_stack_entry> &thread_local_executor_stack();
+  ASYNCNET_DECL static detail::intrusive_list<executor_stack_entry> &thread_local_executor_stack();
 
   /// RAII guard that pushes and pops the thread local executor stack.
   struct run_stack_guard;
@@ -109,7 +109,7 @@ public:
   }
 
   /// Indicates whether the calling thread is running the io_context.
-  bool running_in_this_thread() const;
+  ASYNCNET_DECL bool running_in_this_thread() const;
 
   /// Submit a function object to the completion queue.
   template <typename Function, typename ProtoAllocator>
@@ -121,10 +121,10 @@ public:
   void dispatch(Function &&f, const ProtoAllocator &a) const;
 
   /// Notifies the io_context that an asynchronous operation has completed.
-  void on_work_finished() const noexcept;
+  ASYNCNET_DECL void on_work_finished() const noexcept;
 
   /// Notifies the io_context that an asynchronous operation has started.
-  void on_work_started() const noexcept;
+  ASYNCNET_DECL void on_work_started() const noexcept;
 
   /// Equality operator.
   friend bool operator==(const executor_type &x, const executor_type &y) noexcept
@@ -139,7 +139,7 @@ public:
 
 private:
   /// Creates an executor from the execution context.
-  explicit executor_type(io_context &context) noexcept;
+  ASYNCNET_DECL explicit executor_type(io_context &context) noexcept;
 
   /// The io_context that the executor belongs to.
   io_context *context_;
@@ -149,5 +149,11 @@ private:
 }
 
 #include <asyncnet/impl/io_context.hpp>
+
+#ifdef ASYNCNET_HEADER_ONLY
+
+# include <asyncnet/impl/io_context.ipp>
+
+#endif
 
 #endif //ASYNCNET_IO_CONTEXT_HPP

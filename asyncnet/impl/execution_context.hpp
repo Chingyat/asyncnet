@@ -11,24 +11,26 @@
 #include <algorithm>
 
 namespace asyncnet {
+
 template <typename Service, typename ...Args>
 Service &make_service(execution_context &context, Args &&...args)
 {
   std::unique_lock<std::recursive_mutex> lock(context.mutex_);
 
   auto const iter = std::find_if(context.services_.cbegin(), context.services_.cend(),
-                                 [](const std::pair<std::unique_ptr<execution_context::service>, execution_context::service_index_type> &pair)
+                                 [](const execution_context::service &svc)
                                  {
-                                   return pair.second == detail::key_index<typename Service::key>();
+                                   return execution_context::get_service_index(svc) ==
+                                          detail::key_index<typename Service::key_type>();
                                  });
 
   if (iter != context.services_.cend())
     throw service_already_exist();
 
-  auto svc = std::make_unique<Service>(context, std::forward<Args>(args)...);
+  auto svc = new Service(context, std::forward<Args>(args)...);
   auto &ret = *svc;
+  context.services_.push_back(ret);
 
-  context.services_.emplace_back(std::move(svc), detail::key_index<typename Service::key>());
   return ret;
 }
 
@@ -38,9 +40,10 @@ bool has_service(const execution_context &context)
   std::lock_guard<std::recursive_mutex> lock(context.mutex_);
 
   auto const iter = std::find_if(context.services_.cbegin(), context.services_.cend(),
-                                 [](const std::pair<std::unique_ptr<execution_context::service>, execution_context::service_index_type> &pair)
+                                 [](const execution_context::service &svc)
                                  {
-                                   return pair.second == detail::key_index<typename Service::key>();
+                                   return execution_context::get_service_index(svc) ==
+                                          detail::key_index<typename Service::key_type>();
                                  });
 
   return iter != context.services_.cend();
@@ -51,19 +54,19 @@ Service &use_service(execution_context &context)
 {
   std::unique_lock<std::recursive_mutex> lock(context.mutex_);
 
-  auto const iter = std::find_if(context.services_.cbegin(), context.services_.cend(),
-                                 [](const std::pair<std::unique_ptr<execution_context::service>, execution_context::service_index_type> &pair)
+  auto const iter = std::find_if(context.services_.begin(), context.services_.end(),
+                                 [](const execution_context::service &svc)
                                  {
-                                   return pair.second == detail::key_index<typename Service::key>();
+                                   return execution_context::get_service_index(svc) ==
+                                          detail::key_index<typename Service::key_type>();
                                  });
+  if (iter != context.services_.end())
+    return static_cast<Service &>( *iter );
 
-  if (iter != context.services_.cend())
-    return *iter->first;
-
-  auto svc = std::make_unique<Service>(context);
+  auto svc = new Service(context);
   auto &ret = *svc;
 
-  context.services_.emplace_back(std::move(svc), detail::key_index<typename Service::key>());
+  context.services_.push_back(ret);
   return ret;
 }
 
