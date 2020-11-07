@@ -114,6 +114,16 @@ public:
     insert_between(&node, head_.prev, &head_);
   }
 
+  void pop_front()
+  {
+    erase(front());
+  }
+
+  void pop_back()
+  {
+    erase(back());
+  }
+
   static void replace(reference old, reference node) noexcept
   {
     node.next = old.next;
