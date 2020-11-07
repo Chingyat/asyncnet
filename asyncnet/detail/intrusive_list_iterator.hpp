@@ -22,7 +22,7 @@ public:
 
   constexpr intrusive_list_iterator() noexcept: data_() {}
 
-  explicit constexpr intrusive_list_iterator(intrusive_list_node<T> *p) noexcept: data_(p) {}
+  explicit constexpr intrusive_list_iterator(T *p) noexcept: data_(p) {}
 
   intrusive_list_iterator(const intrusive_list_iterator &) = default;
 
@@ -30,7 +30,7 @@ public:
 
   reference operator*() const
   {
-    return static_cast<reference>(*data_);
+    return *data_;
   }
 
   pointer operator->() const
@@ -75,7 +75,7 @@ public:
   }
 
 private:
-  intrusive_list_node<T> *data_;
+  T *data_;
 };
 
 }

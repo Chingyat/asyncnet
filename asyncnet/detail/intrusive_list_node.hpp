@@ -29,21 +29,21 @@ public:
 
   intrusive_list_node operator=(const intrusive_list_node &) = delete;
 
+protected:
+  intrusive_list_node() noexcept
+  {
+    reinit_list_node();
+  }
+
   void reinit_list_node() noexcept
   {
-    prev = this;
-    next = this;
+    prev = static_cast<T *>(this);
+    next = static_cast<T *>(this);
   }
 
-protected:
-  constexpr intrusive_list_node() noexcept
-      : prev(this),
-        next(this)
-  {
-  }
 
-  intrusive_list_node *prev;
-  intrusive_list_node *next;
+  T *prev;
+  T *next;
 };
 
 }

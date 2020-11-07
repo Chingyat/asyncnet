@@ -20,14 +20,14 @@ class intrusive_list
 public:
   using value_type = std::decay_t<T>;
   using reference = T &;
+  using const_reference = const T &;
   using node_type = T;
   using pointer = T *;
-  using node_ptr = intrusive_list_node<T> *;
+  using const_pointer = const T *;
   using iterator = intrusive_list_iterator<T>;
   using const_iterator = intrusive_list_iterator<std::add_const_t<T>>;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
 
   constexpr intrusive_list() noexcept = default;
 
@@ -42,7 +42,7 @@ public:
 
   iterator end() noexcept
   {
-    return iterator{&head_};
+    return iterator{get_head_ptr()};
   }
 
   const_iterator begin() const noexcept
@@ -52,7 +52,7 @@ public:
 
   const_iterator end() const noexcept
   {
-    return const_iterator{&head_};
+    return const_iterator{get_head_ptr()};
   }
 
   const_iterator cbegin() const noexcept
@@ -99,19 +99,19 @@ public:
   /// Complexity: constant.
   bool empty() const noexcept
   {
-    return head_.next == &head_;
+    return head_.next == get_head_ptr();
   }
 
   void push_front(reference node) noexcept
   {
-    delete_entry(&node);
-    insert_between(&node, &head_, head_.next);
+    delete_entry(std::addressof(node));
+    insert_between(std::addressof(node), get_head_ptr(), head_.next);
   }
 
   void push_back(reference node) noexcept
   {
-    delete_entry(&node);
-    insert_between(&node, head_.prev, &head_);
+    delete_entry(std::addressof(node));
+    insert_between(std::addressof(node), head_.prev, get_head_ptr());
   }
 
   void pop_front()
@@ -136,7 +136,7 @@ public:
 
   void erase(reference node)
   {
-    delete_entry(&node);
+    delete_entry(std::addressof(node));
     node.reinit_list_node();
   }
 
@@ -145,17 +145,30 @@ public:
     erase(*pos);
   }
 
-  reference back() const
+  reference back()
   {
     assert(!empty());
     return *pointer(head_.prev);
   }
 
-  reference front() const
+  const_reference back() const
+  {
+    assert(!empty());
+    return *const_pointer (head_.prev);
+  }
+
+  reference front()
   {
     assert(!empty());
     return *pointer(head_.next);
   }
+
+  const_reference front() const
+  {
+    assert(!empty());
+    return *const_pointer (head_.next);
+  }
+
 
   /// Tests whether the list has exactly one elements.
   /// Complexity: constant.
@@ -165,7 +178,7 @@ public:
   }
 
 private:
-  static void insert_between(node_ptr node, node_ptr prev, node_ptr next) noexcept
+  static void insert_between(pointer node, pointer prev, pointer next) noexcept
   {
     next->prev = node;
     node->next = next;
@@ -173,15 +186,26 @@ private:
     prev->next = node;
   }
 
-  static void delete_between(node_ptr prev, node_ptr next) noexcept
+  static void delete_between(pointer prev, pointer next) noexcept
   {
     next->prev = prev;
     prev->next = next;
   }
 
-  static void delete_entry(node_ptr entry) noexcept
+  static void delete_entry(pointer entry) noexcept
   {
     delete_between(entry->prev, entry->next);
+  }
+  
+  pointer  get_head_ptr() noexcept
+  {
+    // Use reinterpret_cast to form an invalid pointer
+    return static_cast<pointer>(&head_);
+  }
+
+  const_pointer get_head_ptr() const noexcept
+  {
+    return static_cast<const_pointer>(&head_);
   }
 
   // Use next as the head and prev as the tail.
