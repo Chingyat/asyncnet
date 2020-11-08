@@ -11,6 +11,7 @@
 #include <asyncnet/detail/handler_base.hpp>
 #include <asyncnet/detail/intrusive_list.hpp>
 #include <asyncnet/execution_context.hpp>
+#include <asyncnet/detail/tss_ptr.hpp>
 
 #include <atomic>
 #include <condition_variable>
@@ -95,14 +96,6 @@ private:
 
     io_context *context_;
   };
-
-  /// RAII guard that pushes and pops the thread local executor stack.
-  struct run_stack_guard;
-
-
-  /// Thread local stack of running io_context executors.
-  /// This can be used to determine if the current thread is running the io_context.
-  ASYNCNET_DECL static detail::intrusive_list<executor_stack_entry> &thread_local_executor_stack();
 
   ASYNCNET_DECL static completion_handler_queue &thread_local_completion_queue();
 };

@@ -40,13 +40,10 @@ public:
   /// Destructor.
   ASYNCNET_DECL ~system_context() noexcept;
 
-private:
   /// Constructor.
   ASYNCNET_DECL system_context();
 
-  /// Returns the system_context singleton.
-  ASYNCNET_DECL static system_context &get_system_context();
-
+private:
   /// Number of threads in the system thread pool.
   static const std::size_t num_threads = 1;
 

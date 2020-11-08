@@ -5,6 +5,7 @@
 #ifndef ASYNCNET_IMPL_IO_CONTEXT_IPP
 #define ASYNCNET_IMPL_IO_CONTEXT_IPP
 
+#include <asyncnet/detail/call_stack.hpp>
 #include <asyncnet/io_context.hpp>
 
 #include <algorithm>
@@ -37,31 +38,10 @@ io_context::~io_context() noexcept
   destroy();
 }
 
-detail::intrusive_list<io_context::executor_stack_entry> &io_context::thread_local_executor_stack()
-{
-  static thread_local detail::intrusive_list<io_context::executor_stack_entry> stack;
-  return stack;
-}
-
-
-struct io_context::run_stack_guard {
-  executor_stack_entry entry_;
-
-  explicit run_stack_guard(io_context &context) : entry_{context}
-  {
-    thread_local_executor_stack().push_back(entry_);
-  }
-
-  ~run_stack_guard() noexcept
-  {
-    assert(&entry_ == &thread_local_executor_stack().back());
-    thread_local_executor_stack().erase(entry_);
-  }
-};
 
 io_context::count_type io_context::poll_one()
 {
-  run_stack_guard run_guard(*this);
+  detail::call_stack<io_context *>::frame f(this);
 
   if (!thread_local_completion_queue().empty()) {
     auto &h = comp_queue_.front();
@@ -93,7 +73,7 @@ io_context::count_type io_context::poll()
 
 io_context::count_type io_context::run_one()
 {
-  run_stack_guard run_guard(*this);
+  detail::call_stack<io_context *>::frame f(this);
 
   if (!thread_local_completion_queue().empty()) {
     auto &h = comp_queue_.front();

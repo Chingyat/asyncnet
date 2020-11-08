@@ -185,7 +185,7 @@ private:
   }
 
   // Use next as the head and prev as the tail.
-  intrusive_list_node<T> head_;
+  mutable intrusive_list_node<T> head_;
 };
 
 }

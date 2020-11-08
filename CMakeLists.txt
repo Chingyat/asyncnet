@@ -43,7 +43,13 @@ set(ASYNCNET_HEADERS
         asyncnet/detail/intrusive_list_iterator.hpp
         asyncnet/detail/config.hpp
         asyncnet/posix/reactor.h
-        asyncnet/executor_binder.hpp asyncnet/defer.hpp asyncnet/impl/defer.hpp asyncnet/detail/global.hpp asyncnet/detail/event.hpp)
+        asyncnet/executor_binder.hpp
+        asyncnet/defer.hpp
+        asyncnet/impl/defer.hpp
+        asyncnet/detail/global.hpp
+        asyncnet/detail/event.hpp
+        asyncnet/detail/tss_ptr.hpp
+        asyncnet/detail/call_stack.hpp)
 
 include_directories(.)
 add_library(asyncnet STATIC lib/src.cpp ${ASYNCNET_HEADERS})

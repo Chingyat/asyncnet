@@ -7,12 +7,13 @@
 
 #include <asyncnet/system_context.hpp>
 #include <asyncnet/system_executor.hpp>
+#include <asyncnet/detail/global.hpp>
 
 namespace asyncnet {
 
 system_context &system_executor::context() const
 {
-  return system_context::get_system_context();
+  return detail::global<system_context>();
 }
 
 void system_executor::on_work_finished() const noexcept

@@ -47,12 +47,6 @@ system_context::executor_type system_context::get_executor()
   return {};
 }
 
-system_context &system_context::get_system_context()
-{
-  static system_context i;
-  return i;
-}
-
 } // namespace asyncnet
 
 #endif //ASYNCNET_IMPL_SYSTEM_CONTEXT_IPP
