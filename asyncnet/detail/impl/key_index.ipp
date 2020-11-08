@@ -12,7 +12,7 @@
 namespace asyncnet {
 namespace detail {
 
-unsigned long key_counter_inc()
+unsigned long key_counter_inc() noexcept
 {
   static std::atomic_ulong counter{0};
   return ++counter;

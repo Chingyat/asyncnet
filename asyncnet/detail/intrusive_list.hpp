@@ -5,11 +5,11 @@
 #ifndef ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP
 #define ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP
 
-#include <asyncnet/detail/intrusive_list_node.hpp>
 #include <asyncnet/detail/intrusive_list_iterator.hpp>
+#include <asyncnet/detail/intrusive_list_node.hpp>
 
-#include <type_traits>
 #include <cassert>
+#include <type_traits>
 
 namespace asyncnet {
 namespace detail {
@@ -20,10 +20,8 @@ class intrusive_list
 public:
   using value_type = std::decay_t<T>;
   using reference = T &;
-  using const_reference = const T &;
   using node_type = T;
   using pointer = T *;
-  using const_pointer = const T *;
   using iterator = intrusive_list_iterator<T>;
   using const_iterator = intrusive_list_iterator<std::add_const_t<T>>;
   using reverse_iterator = std::reverse_iterator<iterator>;
@@ -42,7 +40,7 @@ public:
 
   iterator end() noexcept
   {
-    return iterator{get_head_ptr()};
+    return iterator{&head_};
   }
 
   const_iterator begin() const noexcept
@@ -52,7 +50,7 @@ public:
 
   const_iterator end() const noexcept
   {
-    return const_iterator{get_head_ptr()};
+    return const_iterator{&head_};
   }
 
   const_iterator cbegin() const noexcept
@@ -99,19 +97,19 @@ public:
   /// Complexity: constant.
   bool empty() const noexcept
   {
-    return head_.next == get_head_ptr();
+    return head_.next == &head_;
   }
 
   void push_front(reference node) noexcept
   {
-    delete_entry(std::addressof(node));
-    insert_between(std::addressof(node), get_head_ptr(), head_.next);
+    delete_entry(&node);
+    insert_between(&node, &head_, head_.next);
   }
 
   void push_back(reference node) noexcept
   {
-    delete_entry(std::addressof(node));
-    insert_between(std::addressof(node), head_.prev, get_head_ptr());
+    delete_entry(&node);
+    insert_between(&node, head_.prev, &head_);
   }
 
   void pop_front()
@@ -131,13 +129,13 @@ public:
     node.prev = old.prev;
     node.prev->next = &node;
 
-    old.reinit_list_node();
+    old.init();
   }
 
   void erase(reference node)
   {
-    delete_entry(std::addressof(node));
-    node.reinit_list_node();
+    delete_entry(&node);
+    node.init();
   }
 
   void erase(iterator pos)
@@ -145,30 +143,17 @@ public:
     erase(*pos);
   }
 
-  reference back()
+  reference back() const
   {
     assert(!empty());
     return *pointer(head_.prev);
   }
 
-  const_reference back() const
-  {
-    assert(!empty());
-    return *const_pointer (head_.prev);
-  }
-
-  reference front()
+  reference front() const
   {
     assert(!empty());
     return *pointer(head_.next);
   }
-
-  const_reference front() const
-  {
-    assert(!empty());
-    return *const_pointer (head_.next);
-  }
-
 
   /// Tests whether the list has exactly one elements.
   /// Complexity: constant.
@@ -178,7 +163,9 @@ public:
   }
 
 private:
-  static void insert_between(pointer node, pointer prev, pointer next) noexcept
+  using node_ptr = intrusive_list_node<T> *;
+
+  static void insert_between(node_ptr node, node_ptr prev, node_ptr next) noexcept
   {
     next->prev = node;
     node->next = next;
@@ -186,26 +173,15 @@ private:
     prev->next = node;
   }
 
-  static void delete_between(pointer prev, pointer next) noexcept
+  static void delete_between(node_ptr prev, node_ptr next) noexcept
   {
     next->prev = prev;
     prev->next = next;
   }
 
-  static void delete_entry(pointer entry) noexcept
+  static void delete_entry(node_ptr entry) noexcept
   {
     delete_between(entry->prev, entry->next);
-  }
-  
-  pointer  get_head_ptr() noexcept
-  {
-    // Use reinterpret_cast to form an invalid pointer
-    return static_cast<pointer>(&head_);
-  }
-
-  const_pointer get_head_ptr() const noexcept
-  {
-    return static_cast<const_pointer>(&head_);
   }
 
   // Use next as the head and prev as the tail.
@@ -213,6 +189,6 @@ private:
 };
 
 }
-}
+} // namespace asyncnet::detail
 
 #endif //ASYNCNET_DETAIL_INTRUSIVE_LIST_HPP

@@ -13,24 +13,14 @@ namespace asyncnet {
 
 io_context::io_context(int concurrency_hint) noexcept
 {
-  (void)concurrency_hint;
+  (void) concurrency_hint;
 }
 
 io_context::io_context() noexcept : io_context(1) {}
 
 io_context::~io_context() noexcept = default;
 
-struct io_context::executor_stack_entry
-    : detail::intrusive_list_node<io_context::executor_stack_entry>
-{
-
-  explicit executor_stack_entry(const executor_type &ex)
-      : executor_(ex) {}
-
-  io_context::executor_type executor_;
-};
-
-detail::intrusive_list <io_context::executor_stack_entry> &io_context::thread_local_executor_stack()
+detail::intrusive_list<io_context::executor_stack_entry> &io_context::thread_local_executor_stack()
 {
   static thread_local detail::intrusive_list<io_context::executor_stack_entry> stack;
   return stack;
@@ -82,10 +72,10 @@ io_context::count_type io_context::run_one()
   run_stack_guard run_guard(*this);
 
   std::unique_lock<std::mutex> lock(mutex_);
-  cond_.wait(lock, [&]
+  while (comp_queue_.empty() && !stopped() && !no_work_)
   {
-    return !comp_queue_.empty() || stopped_ || outstanding_work_count_ == 0;
-  });
+    cond_.wait(lock);
+  }
 
   if (comp_queue_.empty())
     return 0;
@@ -111,6 +101,7 @@ io_context::count_type io_context::run()
 
 void io_context::stop()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   stopped_ = true;
   cond_.notify_all();
 }
@@ -118,7 +109,7 @@ void io_context::stop()
 void io_context::restart()
 {
   this->~io_context();
-  new(this) io_context();
+  new (this) io_context();
 }
 
 io_context::executor_type io_context::get_executor()
@@ -127,35 +118,6 @@ io_context::executor_type io_context::get_executor()
 }
 
 
-io_context::executor_type::executor_type(io_context &context) noexcept
-    : context_(&context)
-{
+}// namespace asyncnet
 
-}
-
-void io_context::executor_type::on_work_finished() const noexcept
-{
-  if (--context().outstanding_work_count_ == 0)
-  {
-    context().cond_.notify_all();
-  }
-}
-
-void io_context::executor_type::on_work_started() const noexcept
-{
-  ++context().outstanding_work_count_;
-}
-
-bool io_context::executor_type::running_in_this_thread() const
-{
-  auto &stk = thread_local_executor_stack();
-
-  return std::any_of(stk.begin(), stk.end(), [this](const auto &x)
-  {
-    return x.executor_ == *this;
-  });
-}
-
-}
-
-#endif //ASYNCNET_IMPL_IO_CONTEXT_IPP
+#endif//ASYNCNET_IMPL_IO_CONTEXT_IPP

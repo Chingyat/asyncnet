@@ -5,8 +5,7 @@
 #ifndef ASYNCNET_DETAIL_MOVE_ONLY_HPP
 #define ASYNCNET_DETAIL_MOVE_ONLY_HPP
 
-namespace asyncnet {
-namespace detail {
+namespace asyncnet { namespace detail {
 
 class move_only
 {
@@ -18,7 +17,6 @@ public:
   constexpr move_only &operator=(move_only &&) noexcept = default;
 };
 
-}
-}
+}} // namespace asyncnet::detail
 
 #endif //ASYNCNET_DETAIL_MOVE_ONLY_HPP

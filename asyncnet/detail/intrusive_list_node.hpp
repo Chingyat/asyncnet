@@ -5,8 +5,9 @@
 #ifndef ASYNCNET_DETAIL_INTRUSIVE_LIST_NODE_HPP
 #define ASYNCNET_DETAIL_INTRUSIVE_LIST_NODE_HPP
 
-#include <utility>
 #include <iterator>
+#include <utility>
+#include <cassert>
 
 namespace asyncnet {
 namespace detail {
@@ -29,24 +30,30 @@ public:
 
   intrusive_list_node operator=(const intrusive_list_node &) = delete;
 
+
 protected:
-  intrusive_list_node() noexcept
+  constexpr intrusive_list_node() noexcept
+      : prev(this),
+        next(this)
   {
-    reinit_list_node();
   }
 
-  void reinit_list_node() noexcept
+  ~intrusive_list_node() noexcept
   {
-    prev = static_cast<T *>(this);
-    next = static_cast<T *>(this);
+    assert(prev == this && next == this);
   }
 
+  void init() noexcept
+  {
+    prev = this;
+    next = this;
+  }
 
-  T *prev;
-  T *next;
+  intrusive_list_node *prev;
+  intrusive_list_node *next;
 };
 
-}
-}
+}// namespace detail
+}// namespace asyncnet
 
-#endif //ASYNCNET_DETAIL_INTRUSIVE_LIST_NODE_HPP
+#endif//ASYNCNET_DETAIL_INTRUSIVE_LIST_NODE_HPP

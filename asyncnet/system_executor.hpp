@@ -30,17 +30,23 @@ public:
 
   ASYNCNET_DECL void on_work_finished() const noexcept;
 
-  friend bool operator==(const system_executor &, const system_executor &) noexcept { return true; }
+  friend bool operator==(const system_executor &, const system_executor &) noexcept
+  {
+    return true;
+  }
 
-  friend bool operator!=(const system_executor &, const system_executor &) noexcept { return false; }
+  friend bool operator!=(const system_executor &, const system_executor &) noexcept
+  {
+    return false;
+  }
 };
 
-}
+} // namespace asyncnet
 
 #include <asyncnet/impl/system_executor.hpp>
 
 #ifdef ASYNCNET_HEADER_ONLY
-# include <asyncnet/impl/system_executor.ipp>
+#include <asyncnet/impl/system_executor.ipp>
 #endif
 
 #endif //ASYNCNET_SYSTEM_EXECUTOR_HPP
