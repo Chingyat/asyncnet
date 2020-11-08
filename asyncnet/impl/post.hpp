@@ -31,7 +31,7 @@ typename async_result<CompletionToken, void()>::result_type
 post(const Executor &ex, CompletionToken &&token)
 {
   async_completion<CompletionToken, void()> init(token);
-  auto ex1 = get_associated_executor(init.completion_handler, ex);
+  auto ex1 = get_associated_executor(init.completion_handler);
   auto work = make_work(ex1);
   auto alloc = get_associated_allocator(init.completion_handler);
 
