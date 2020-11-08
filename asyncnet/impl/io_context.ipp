@@ -31,7 +31,7 @@ struct io_context::run_stack_guard
 {
   executor_stack_entry entry_;
 
-  explicit run_stack_guard(io_context &context) : entry_{context.get_executor()}
+  explicit run_stack_guard(io_context &context) : entry_{context}
   {
     thread_local_executor_stack().push_back(entry_);
   }

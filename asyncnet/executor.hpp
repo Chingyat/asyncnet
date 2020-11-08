@@ -31,6 +31,12 @@ struct is_executor : detail::is_executor_impl<T>
 {
 };
 
+enum class executor_arg_t
+{
+};
+
+constexpr auto executor_arg = executor_arg_t{};
+
 }
 
 #endif //ASYNCNET_EXECUTOR_HPP

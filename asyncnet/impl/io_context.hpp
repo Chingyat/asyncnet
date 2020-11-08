@@ -64,23 +64,13 @@ void io_context::basic_executor_type<Allocator, Bits>::on_work_started() const n
   context().no_work_ = false;
 }
 
-
-struct io_context::executor_stack_entry
-    : detail::intrusive_list_node<io_context::executor_stack_entry>
-{
-  explicit executor_stack_entry(const executor_type &ex)
-      : executor_(ex) {}
-
-  io_context::executor_type executor_;
-};
-
 template <typename Allocator, unsigned int Bits>
 bool io_context::basic_executor_type<Allocator, Bits>::running_in_this_thread() const
 {
   auto &stk = thread_local_executor_stack();
 
   return std::any_of(stk.begin(), stk.end(), [this](const auto &x) {
-    return x.executor_ == *this;
+    return x.context_ == this->context_;
   });
 }
 

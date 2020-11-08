@@ -87,7 +87,15 @@ private:
   /// Number of works in operation.
   std::atomic<count_type> outstanding_work_count_{0};
 
-  struct executor_stack_entry;
+  struct executor_stack_entry
+      : detail::intrusive_list_node<io_context::executor_stack_entry>
+  {
+    explicit executor_stack_entry(io_context &ctx)
+        : context_(&ctx) {}
+
+    io_context *context_;
+  };
+
 
   /// Thread local stack of running io_context executors.
   /// This can be used to determine if the current thread is running the io_context.

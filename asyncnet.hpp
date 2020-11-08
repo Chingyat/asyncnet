@@ -12,6 +12,7 @@
 #include <asyncnet/dispatch.hpp>
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/executor.hpp>
+#include <asyncnet/executor_binder.hpp>
 #include <asyncnet/executor_work_guard.hpp>
 #include <asyncnet/io_context.hpp>
 #include <asyncnet/post.hpp>
@@ -19,4 +20,4 @@
 #include <asyncnet/system_context.hpp>
 #include <asyncnet/system_executor.hpp>
 
-#endif //ASYNCNET_HPP
+#endif // ASYNCNET_HPP
