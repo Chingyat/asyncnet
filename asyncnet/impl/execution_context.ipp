@@ -29,7 +29,7 @@ void execution_context::shutdown() noexcept
 
 void execution_context::destroy() noexcept
 {
-  std::lock_guard<std::recursive_mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   while (!services_.empty())
   {
     auto &svc = services_.back();

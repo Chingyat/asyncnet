@@ -15,7 +15,7 @@ namespace asyncnet {
 template <typename Service, typename ...Args>
 Service &make_service(execution_context &context, Args &&...args)
 {
-  std::unique_lock<std::recursive_mutex> lock(context.mutex_);
+  std::unique_lock<std::mutex> lock(context.mutex_);
 
   auto const iter = std::find_if(context.services_.cbegin(), context.services_.cend(),
                                  [](const execution_context::service &svc)
@@ -38,7 +38,7 @@ Service &make_service(execution_context &context, Args &&...args)
 template <typename Service>
 bool has_service(const execution_context &context)
 {
-  std::lock_guard<std::recursive_mutex> lock(context.mutex_);
+  std::lock_guard<std::mutex> lock(context.mutex_);
 
   auto const iter = std::find_if(context.services_.cbegin(), context.services_.cend(),
                                  [](const execution_context::service &svc)
@@ -53,7 +53,7 @@ bool has_service(const execution_context &context)
 template <typename Service>
 Service &use_service(execution_context &context)
 {
-  std::lock_guard<std::recursive_mutex> lock(context.mutex_);
+  std::lock_guard<std::mutex> lock(context.mutex_);
 
   auto const iter = std::find_if(context.services_.begin(), context.services_.end(),
                                  [](const execution_context::service &svc)

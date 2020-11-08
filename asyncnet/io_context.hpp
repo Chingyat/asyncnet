@@ -7,6 +7,7 @@
 
 #include <asyncnet/async_result.hpp>
 #include <asyncnet/detail/config.hpp>
+#include <asyncnet/detail/event.hpp>
 #include <asyncnet/detail/handler_base.hpp>
 #include <asyncnet/detail/intrusive_list.hpp>
 #include <asyncnet/execution_context.hpp>
@@ -73,36 +74,37 @@ private:
   mutable std::mutex mutex_;
 
   /// Used to notify threads that running this io_context.
-  std::condition_variable cond_;
+  detail::event event_;
 
   /// Completion handler queue. This variable is guarded by mutex_.
   completion_handler_queue comp_queue_;
 
   /// Indicates whether the io_context has been stopped. This variable is guarded by mutex_.
-  std::atomic<bool> stopped_{false};
+  bool stopped_{false};
 
   /// Indicates whether there is no outstanding work. This variable is guarded by mutex_.
-  std::atomic<bool> no_work_{true};
+  bool no_work_{true};
 
   /// Number of works in operation.
   std::atomic<count_type> outstanding_work_count_{0};
 
   struct executor_stack_entry
-      : detail::intrusive_list_node<io_context::executor_stack_entry>
-  {
+      : detail::intrusive_list_node<io_context::executor_stack_entry> {
     explicit executor_stack_entry(io_context &ctx)
         : context_(&ctx) {}
 
     io_context *context_;
   };
 
+  /// RAII guard that pushes and pops the thread local executor stack.
+  struct run_stack_guard;
+
 
   /// Thread local stack of running io_context executors.
   /// This can be used to determine if the current thread is running the io_context.
   ASYNCNET_DECL static detail::intrusive_list<executor_stack_entry> &thread_local_executor_stack();
 
-  /// RAII guard that pushes and pops the thread local executor stack.
-  struct run_stack_guard;
+  ASYNCNET_DECL static completion_handler_queue &thread_local_completion_queue();
 };
 
 template <typename Allocator, unsigned int Bits>
@@ -133,6 +135,11 @@ public:
   /// Otherwise the function object will be submit to the completion queue.
   template <typename Function, typename ProtoAllocator>
   void dispatch(Function &&f, const ProtoAllocator &a) const;
+
+  /// If running_in_this_thread() returns true, then f will be invoked in the calling thread after defer() returns.
+  /// Otherwise behaves like post().
+  template <typename Function, typename ProtoAllocator>
+  void defer(Function &&f, const ProtoAllocator &a) const;
 
   /// Notifies the io_context that an asynchronous operation has completed.
   void on_work_finished() const noexcept;

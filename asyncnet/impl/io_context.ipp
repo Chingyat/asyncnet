@@ -18,7 +18,24 @@ io_context::io_context(int concurrency_hint) noexcept
 
 io_context::io_context() noexcept : io_context(1) {}
 
-io_context::~io_context() noexcept = default;
+io_context::~io_context() noexcept
+{
+  shutdown();
+
+  while (!thread_local_completion_queue().empty()) {
+    auto &h = thread_local_completion_queue().front();
+    thread_local_completion_queue().erase(h);
+    h.release();
+  }
+
+  while (!comp_queue_.empty()) {
+    auto &h = comp_queue_.front();
+    comp_queue_.erase(h);
+    h.release();
+  }
+
+  destroy();
+}
 
 detail::intrusive_list<io_context::executor_stack_entry> &io_context::thread_local_executor_stack()
 {
@@ -27,8 +44,7 @@ detail::intrusive_list<io_context::executor_stack_entry> &io_context::thread_loc
 }
 
 
-struct io_context::run_stack_guard
-{
+struct io_context::run_stack_guard {
   executor_stack_entry entry_;
 
   explicit run_stack_guard(io_context &context) : entry_{context}
@@ -47,12 +63,20 @@ io_context::count_type io_context::poll_one()
 {
   run_stack_guard run_guard(*this);
 
+  if (!thread_local_completion_queue().empty()) {
+    auto &h = comp_queue_.front();
+    comp_queue_.erase(h);
+    h.invoke();
+    return 1;
+  }
+
   std::unique_lock<std::mutex> lock(mutex_);
   if (comp_queue_.empty())
     return 0;
 
   auto &h = comp_queue_.front();
   comp_queue_.erase(h);
+  event_.reset(lock);
   lock.unlock();
 
   h.invoke();
@@ -62,8 +86,8 @@ io_context::count_type io_context::poll_one()
 io_context::count_type io_context::poll()
 {
   count_type n{0};
-  while (poll_one())
-    ++n;
+  while (auto i = poll_one())
+    n += i;
   return n;
 }
 
@@ -71,17 +95,29 @@ io_context::count_type io_context::run_one()
 {
   run_stack_guard run_guard(*this);
 
-  std::unique_lock<std::mutex> lock(mutex_);
-  while (comp_queue_.empty() && !stopped() && !no_work_)
-  {
-    cond_.wait(lock);
+  if (!thread_local_completion_queue().empty()) {
+    auto &h = comp_queue_.front();
+    comp_queue_.erase(h);
+    h.invoke();
+    return 1;
   }
+
+  std::unique_lock<std::mutex> lock(mutex_);
+  if (comp_queue_.empty() && !no_work_ && !stopped_)
+  {
+    event_.wait(lock);
+  }
+
+  if (stopped_)
+    return 0;
 
   if (comp_queue_.empty())
     return 0;
 
   auto &h = comp_queue_.front();
   comp_queue_.erase(h);
+
+  event_.reset(lock);
   lock.unlock();
 
   h.invoke();
@@ -93,8 +129,8 @@ io_context::count_type io_context::run()
 {
   count_type n{0};
 
-  while (run_one())
-    ++n;
+  while (auto i = run_one())
+    n += i;
 
   return n;
 }
@@ -103,18 +139,25 @@ void io_context::stop()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   stopped_ = true;
-  cond_.notify_all();
+  event_.notify_all(lock);
 }
 
 void io_context::restart()
 {
-  this->~io_context();
-  new (this) io_context();
+  std::unique_lock<std::mutex> lock(mutex_);
+  this->stopped_ = false;
+  this->event_.reset(lock);
 }
 
 io_context::executor_type io_context::get_executor()
 {
   return executor_type(*this);
+}
+
+io_context::completion_handler_queue &io_context::thread_local_completion_queue()
+{
+  static thread_local completion_handler_queue instance;
+  return instance;
 }
 
 

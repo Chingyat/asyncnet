@@ -77,7 +77,7 @@ private:
   ASYNCNET_DECL static unsigned long get_service_index(const service &svc);
 
   /// Use recursive_mutex to allow service constructors to add other services to the execution context.
-  mutable std::recursive_mutex mutex_;
+  mutable std::mutex mutex_;
 
   /// List of services.
   detail::intrusive_list<service> services_;
