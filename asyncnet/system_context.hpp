@@ -48,7 +48,7 @@ private:
   ASYNCNET_DECL static system_context &get_system_context();
 
   /// Number of threads in the system thread pool.
-  static const std::size_t num_threads = 4;
+  static const std::size_t num_threads = 1;
 
   /// io_context used for dispatching works.
   io_context work_io_context_;

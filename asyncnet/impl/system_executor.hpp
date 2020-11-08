@@ -19,8 +19,16 @@ void system_executor::post(Function &&f, const ProtoAllocator &a)
 template <typename Function, typename ProtoAllocator>
 void system_executor::dispatch(Function &&f, const ProtoAllocator &a)
 {
+  (void)a;
+  std::forward<Function>(f)();
+}
+
+template <typename Function, typename ProtoAllocator>
+void system_executor::defer(Function &&f, const ProtoAllocator &a)
+{
   context().work_io_context_.get_executor().dispatch(std::forward<Function>(f), a);
 }
+
 
 } // namespace asyncnet
 

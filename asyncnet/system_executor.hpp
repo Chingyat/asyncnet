@@ -26,6 +26,9 @@ public:
   template <typename Function, typename ProtoAllocator>
   void dispatch(Function &&f, const ProtoAllocator &a);
 
+  template <typename Function, typename ProtoAllocator>
+  void defer(Function &&f, const ProtoAllocator &a);
+
   ASYNCNET_DECL void on_work_started() const noexcept;
 
   ASYNCNET_DECL void on_work_finished() const noexcept;
