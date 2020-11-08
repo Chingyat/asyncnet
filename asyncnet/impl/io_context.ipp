@@ -14,7 +14,7 @@ namespace asyncnet {
 
 io_context::io_context(int concurrency_hint) noexcept
 {
-  (void) concurrency_hint;
+  (void)concurrency_hint;
 }
 
 io_context::io_context() noexcept : io_context(1) {}
@@ -141,6 +141,6 @@ io_context::completion_handler_queue &io_context::thread_local_completion_queue(
 }
 
 
-}// namespace asyncnet
+} // namespace asyncnet
 
-#endif//ASYNCNET_IMPL_IO_CONTEXT_IPP
+#endif //ASYNCNET_IMPL_IO_CONTEXT_IPP

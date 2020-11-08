@@ -6,6 +6,7 @@
 #define ASYNCNET_IMPL_IO_CONTEXT_HPP
 
 #include <asyncnet/async_completion.hpp>
+#include <asyncnet/detail/call_stack.hpp>
 #include <asyncnet/io_context.hpp>
 
 namespace asyncnet {
@@ -16,6 +17,9 @@ void io_context::basic_executor_type<Allocator, Bits>::post(
     Function &&f, const ProtoAllocator &a) const
 {
   std::unique_lock<std::mutex> lock(context().mutex_);
+  if (context().stopped())
+    return;
+
   context().comp_queue_.push_back(*completion_handler_base::create(a, std::forward<Function>(f)));
   context().event_.unlock_and_notify_one(lock);
 }
@@ -76,13 +80,9 @@ void io_context::basic_executor_type<Allocator, Bits>::on_work_started() const n
 template <typename Allocator, unsigned int Bits>
 bool io_context::basic_executor_type<Allocator, Bits>::running_in_this_thread() const
 {
-  auto &stk = thread_local_executor_stack();
-
-  return std::any_of(stk.begin(), stk.end(), [this](const auto &x) {
-    return x.context_ == this->context_;
-  });
+  return detail::call_stack<io_context *>::contains(context_);
 }
 
-}// namespace asyncnet
+} // namespace asyncnet
 
-#endif//ASYNCNET_IMPL_IO_CONTEXT_HPP
+#endif //ASYNCNET_IMPL_IO_CONTEXT_HPP
