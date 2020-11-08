@@ -53,6 +53,7 @@ struct handler
   int operator()()
   {
     std::fill(obj.begin(), obj.end(), n);
+    std::this_thread::sleep_for(std::chrono::microseconds(1));
     return ++n;
   }
 
@@ -69,11 +70,11 @@ void test()
   std::list<std::thread> threads;
   auto w = make_work(ioc);
 
-  for (int i = 0; i != 10; ++i)
+  for (int i = 0; i != 1; ++i)
     threads.emplace_back(&io_context::run,
                          &ioc);
 
-  for (int j = 0; j != 1200; ++j)
+  for (int j = 0; j != 120000; ++j)
     post(ioc, handler());
 
   w.reset();

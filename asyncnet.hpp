@@ -9,6 +9,7 @@
 #include <asyncnet/associated_executor.hpp>
 #include <asyncnet/async_completion.hpp>
 #include <asyncnet/async_result.hpp>
+#include <asyncnet/defer.hpp>
 #include <asyncnet/dispatch.hpp>
 #include <asyncnet/execution_context.hpp>
 #include <asyncnet/executor.hpp>
@@ -20,4 +21,4 @@
 #include <asyncnet/system_context.hpp>
 #include <asyncnet/system_executor.hpp>
 
-#endif // ASYNCNET_HPP
+#endif// ASYNCNET_HPP
